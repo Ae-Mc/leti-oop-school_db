@@ -55,23 +55,6 @@ fun App(database: Database, teachers: List<Teacher>) {
 
 fun main() = application {
     val database = DatabaseFactory().getDatabase()
-    // Add data to database:
-    // transaction(database) {
-    //     val teacher = Teacher.new {
-    //         fullName = "Макурин Александр Евгеньевич"
-    //         salary = 100000
-    //     }
-    //     Subject.new {
-    //         name = "Математика"
-    //         teachers = SizedCollection(listOf(teacher))
-    //     }
-    //     teacher.addSubject(Subject.new { name = "Программирование" })
-    //     Class.new {
-    //         classroomTeacher = teacher
-    //         letter = "А"
-    //         admissionYear = 2005
-    //     }
-    // }
     val teachers = transaction(database) {
         Teacher.all().with(Teacher::classroomClasses, Teacher::subjects).toList()
     }
