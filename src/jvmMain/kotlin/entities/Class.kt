@@ -11,6 +11,8 @@ object Classes : UUIDTable() {
     var admissionYear = integer("admission_year")
     var letter = varchar("letter", 10)
     var classroomTeacher = reference("classroom_teacher", Teachers).nullable()
+
+    val unique = uniqueIndex(admissionYear, letter)
 }
 
 class Class(id: EntityID<UUID>) : UUIDEntity(id) {
