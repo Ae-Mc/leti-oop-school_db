@@ -30,9 +30,8 @@ class Teacher(id: EntityID<UUID>) : UUIDEntity(id) {
 
     override fun toString(): String {
         val classesString = classroomClasses.joinToString(", ")
+        val subjectsString = subjects.joinToString(", ")
 
-        return "$fullName, Salary: $salary, Classroom teacher of [$classesString], Subjects: [" + subjects.joinToString(
-            ", "
-        ) + "]"
+        return "$fullName, Salary: $salary, Classroom teacher of [$classesString], Subjects: [$subjectsString]"
     }
 }
