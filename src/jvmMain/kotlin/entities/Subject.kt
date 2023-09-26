@@ -25,6 +25,6 @@ class Subject(id: EntityID<UUID>) : UUIDEntity(id) {
     }
 
     override fun toString(): String {
-        return "$name, Teachers: " + teachers.joinToString(", ") { teacher -> teacher.fullName }
+        return name
     }
 }

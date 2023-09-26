@@ -35,4 +35,8 @@ class Class(id: EntityID<UUID>) : UUIDEntity(id) {
 
             return "${classNumber}$letter"
         }
+
+    override fun toString(): String {
+        return "$name ($admissionYear)"
+    }
 }
