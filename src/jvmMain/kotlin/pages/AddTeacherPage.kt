@@ -1,3 +1,5 @@
+package pages
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -7,7 +9,6 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import org.jetbrains.exposed.sql.Database
-import pages.CloseDialog
 
 @Composable
 fun AddTeacherPage(database: Database, callback: () -> Unit = {}) {
