@@ -3,25 +3,28 @@ package widgets
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun RowScope.TableCell(
     text: String,
-    weight: Float
+    weight: Float,
+    modifier: Modifier = Modifier,
+    textStyle: TextStyle = LocalTextStyle.current,
 ) {
     Text(
         text = text,
-        modifier = Modifier
-            .border(1.dp, Color.Black)
-            .weight(weight)
-            .padding(8.dp),
+        modifier = Modifier.border(1.dp, Color.Black).weight(weight)
+            .padding(8.dp).then(modifier),
         softWrap = false,
         overflow = TextOverflow.Ellipsis,
+        style = LocalTextStyle.current.merge(textStyle),
     )
 }

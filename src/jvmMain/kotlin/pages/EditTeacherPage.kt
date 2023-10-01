@@ -19,32 +19,27 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import widgets.InputRow
 
 @Composable
-fun AddTeacherPage(database: Database, callback: () -> Unit = {}) {
+fun EditTeacherPage(
+    database: Database,
+    teacher: Teacher,
+    callback: () -> Unit = {}
+) {
     var isOpen by remember { mutableStateOf(true) }
-    var isAskingToClose by remember { mutableStateOf(false) }
 
-    var teacherFIO by remember { mutableStateOf("") }
-    var teacherSalary by remember { mutableStateOf(0) }
+    var teacherFIO by remember { mutableStateOf(teacher.fullName) }
+    var teacherSalary by remember { mutableStateOf(teacher.salary) }
     var isFioError by remember { mutableStateOf(true) }
     var isSalaryError by remember { mutableStateOf(true) }
 
     if (isOpen) {
         Window(
-            onCloseRequest = { isAskingToClose = true },
+            onCloseRequest = { isOpen = false },
             state = WindowState(
                 width = 1200.dp,
                 height = 720.dp,
                 position = WindowPosition(Alignment.Center),
             ),
         ) {
-            if (isAskingToClose) {
-                CloseDialog(
-                    title = "Отмена?",
-                    text = "Вы уверены, что хотите отменить добавление учителя?",
-                    confirmCallback = { isOpen = false },
-                    cancelCallback = { isAskingToClose = false })
-            }
-
             Column(
                 modifier = Modifier.padding(all = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)

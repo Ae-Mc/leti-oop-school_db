@@ -10,9 +10,15 @@ class DatabaseFactory {
         val databaseUrl = "jdbc:mariadb://192.168.1.60:3306/studies"
         val user = "root"
         val password = "123654789987456321"
-        var config = DatabaseConfig { keepLoadedReferencesOutOfTransaction = true }
+        val config =
+            DatabaseConfig { keepLoadedReferencesOutOfTransaction = true }
         val database =
-            Database.connect(databaseUrl, user = user, password = password, databaseConfig = config)
+            Database.connect(
+                databaseUrl,
+                user = user,
+                password = password,
+                databaseConfig = config
+            )
         transaction(database) {
             SchemaUtils.create(
                 Classes,
