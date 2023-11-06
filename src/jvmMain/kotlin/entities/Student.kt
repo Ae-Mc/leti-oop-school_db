@@ -4,6 +4,7 @@ import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.UUIDTable
+import util.validators.fullNameValidator
 import java.time.LocalDate
 import java.util.*
 
@@ -13,11 +14,18 @@ object Students : UUIDTable() {
 }
 
 class Student(id: EntityID<UUID>) : UUIDEntity(id) {
-    companion object : UUIDEntityClass<Student>(Students)
+    companion object : UUIDEntityClass<Student>(Students) {
+        fun validateNew(fullName: String, studentClass: Class): Student {
+            return Student.new {
+                this.fullName = fullNameValidator(fullName)
+                this.studentClass = studentClass.id
+            }
+        }
+    }
 
     var fullName by Students.fullName
     var studentClass by Students.studentClass
-    val marks by Mark backReferencedOn Marks.student
+    val marks by Mark referrersOn Marks.student
 
     fun addMark(teacher: Teacher, subject: Subject, mark: Int, date: LocalDate?): Mark {
         val student = this

@@ -17,9 +17,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.WindowState
 import entities.Teacher
 import org.jetbrains.exposed.dao.with
 import org.jetbrains.exposed.sql.Database
@@ -47,21 +44,40 @@ fun TeachersPage(database: Database, callback: () -> Unit) {
     }
 
     if (isOpen) {
-        Window(
-            onCloseRequest = {
-                isOpen = false
-                callback()
-            },
-            state = WindowState(
-                width = 1920.dp,
-                height = 1080.dp,
-                position = WindowPosition(Alignment.Center),
-            ),
-        ) {
+        if (showAddTeacherPage) {
+            // Shows add teacher page
+            AddTeacherPage(
+                database,
+                callback = {
+                    showAddTeacherPage = false
+                    teachers = transaction(database) {
+                        Teacher.all()
+                            .with(Teacher::subjects, Teacher::classroomClasses)
+                            .toList()
+                    }
+                },
+            )
+        } else if (teacher is Teacher) {
+            // Shows edit teacher page
+            EditTeacherPage(database = database, teacher = teacher, callback = {
+                editingTeacher = null
+                teachers = transaction(database) {
+                    Teacher.all()
+                        .with(Teacher::subjects, Teacher::classroomClasses)
+                        .toList()
+                }
+            })
+        } else {
             Column(
                 modifier = Modifier.fillMaxSize().padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top)
             ) {
+                Button(onClick = {
+                    isOpen = false
+                    callback()
+                }) {
+                    Text("Назад")
+                }
                 // Table
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth().weight(1f),
@@ -70,7 +86,7 @@ fun TeachersPage(database: Database, callback: () -> Unit) {
                 ) {
                     // Here is the header
                     item {
-                        Row(Modifier.background(Color.Gray)) {
+                        Row(Modifier.background(Color(0xff9efd38))) {
                             TableCell(
                                 text = "№",
                                 weight = weights[0],
@@ -139,27 +155,4 @@ fun TeachersPage(database: Database, callback: () -> Unit) {
         }
     }
 
-    if (showAddTeacherPage) {
-        // Shows add teacher page
-        AddTeacherPage(
-            database,
-            callback = {
-                showAddTeacherPage = false
-                teachers = transaction(database) {
-                    Teacher.all()
-                        .with(Teacher::subjects, Teacher::classroomClasses)
-                        .toList()
-                }
-            },
-        )
-    } else if (teacher is Teacher) {
-        // Shows edit teacher page
-        EditTeacherPage(database = database, teacher = teacher, callback = {
-            editingTeacher = null
-            teachers = transaction(database) {
-                Teacher.all().with(Teacher::subjects, Teacher::classroomClasses)
-                    .toList()
-            }
-        })
-    }
 }

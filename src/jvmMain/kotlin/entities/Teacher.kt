@@ -5,6 +5,8 @@ import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.insert
+import positiveInt
+import util.validators.fullNameValidator
 import java.util.*
 
 object Teachers : UUIDTable() {
@@ -13,7 +15,15 @@ object Teachers : UUIDTable() {
 }
 
 class Teacher(id: EntityID<UUID>) : UUIDEntity(id) {
-    companion object : UUIDEntityClass<Teacher>(Teachers)
+    companion object : UUIDEntityClass<Teacher>(Teachers) {
+        fun validateNew(salary: String, fullName: String): Teacher {
+            val salaryInt = positiveInt(salary.toIntOrNull())
+            return super.new {
+                this.salary = salaryInt
+                this.fullName = fullNameValidator(fullName)
+            }
+        }
+    }
 
     var fullName by Teachers.fullName
     var salary by Teachers.salary
