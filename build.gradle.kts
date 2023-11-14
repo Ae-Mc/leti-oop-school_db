@@ -3,6 +3,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose")
+    kotlin("plugin.serialization")
 }
 
 group = "ru.ae_mc"
@@ -18,7 +19,7 @@ repositories {
 
 kotlin {
     jvm {
-        jvmToolchain(11)
+        jvmToolchain(17)
         withJava()
     }
     sourceSets {
@@ -33,6 +34,10 @@ kotlin {
                 implementation("org.slf4j:slf4j-simple:2.0.9")
                 implementation("com.h2database:h2:$h2Version")
                 implementation("org.mariadb.jdbc:mariadb-java-client:3.2.0")
+                implementation("io.github.pdvrieze.xmlutil:core:0.86.2")
+                implementation("io.github.pdvrieze.xmlutil:serialization:0.86.2")
+                implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.+")
+                implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.16.+")
             }
         }
         val jvmTest by getting

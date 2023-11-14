@@ -1,5 +1,7 @@
 package entities
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -9,11 +11,19 @@ import positiveInt
 import util.validators.fullNameValidator
 import java.util.*
 
+
 object Teachers : UUIDTable() {
     val fullName = text("full_name").index()
     val salary = integer("salary")
 }
 
+@JsonAutoDetect(
+    fieldVisibility = JsonAutoDetect.Visibility.NONE,
+    setterVisibility = JsonAutoDetect.Visibility.NONE,
+    creatorVisibility = JsonAutoDetect.Visibility.NONE,
+    getterVisibility = JsonAutoDetect.Visibility.NONE,
+    isGetterVisibility = JsonAutoDetect.Visibility.NONE,
+)
 class Teacher(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object : UUIDEntityClass<Teacher>(Teachers) {
         fun validateNew(salary: String, fullName: String): Teacher {
@@ -25,7 +35,13 @@ class Teacher(id: EntityID<UUID>) : UUIDEntity(id) {
         }
     }
 
+    @get:JsonProperty("id")
+    val jsonId get() = id
+
+    @get:JsonProperty("fullName")
     var fullName by Teachers.fullName
+
+    @get:JsonProperty("salary")
     var salary by Teachers.salary
     var subjects by Subject via TeacherSubjects
     val classroomClasses by Class optionalReferrersOn Classes.classroomTeacher
