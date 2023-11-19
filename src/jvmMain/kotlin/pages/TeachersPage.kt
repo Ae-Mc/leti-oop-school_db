@@ -67,14 +67,20 @@ fun TeachersPage(database: Database, callback: () -> Unit) {
             )
         } else if (teacher is Teacher) {
             // Shows edit teacher page
-            EditTeacherPage(database = database, teacher = teacher, callback = {
-                editingTeacher = null
-                reloadTeachers()
-            })
+            EditTeacherPage(
+                database = database,
+                teacher = teacher,
+                callback = {
+                    editingTeacher = null
+                    reloadTeachers()
+                })
         } else {
             Column(
                 modifier = Modifier.fillMaxSize().padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top)
+                verticalArrangement = Arrangement.spacedBy(
+                    8.dp,
+                    Alignment.Top
+                )
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -114,9 +120,18 @@ fun TeachersPage(database: Database, callback: () -> Unit) {
                             )
                             TableCell(text = "id", weight = weights[1])
                             TableCell(text = "ФИО", weight = weights[2])
-                            TableCell(text = "Зарплата", weight = weights[3])
-                            TableCell(text = "Предметы", weight = weights[4])
-                            TableCell(text = "Классрук", weight = weights[5])
+                            TableCell(
+                                text = "Зарплата",
+                                weight = weights[3]
+                            )
+                            TableCell(
+                                text = "Предметы",
+                                weight = weights[4]
+                            )
+                            TableCell(
+                                text = "Классрук",
+                                weight = weights[5]
+                            )
                             TableCell(text = "", weight = weights[6])
                         }
                     }
@@ -153,7 +168,9 @@ fun TeachersPage(database: Database, callback: () -> Unit) {
                                 weight = weights[4]
                             )
                             TableCell(
-                                text = teacher.classroomClasses.joinToString(", "),
+                                text = teacher.classroomClasses.joinToString(
+                                    ", "
+                                ),
                                 weight = weights[5]
                             )
                             TableCell(
@@ -162,7 +179,8 @@ fun TeachersPage(database: Database, callback: () -> Unit) {
                                 onClick = {
                                     transaction(database) {
                                         for (classRoom in teacher.classroomClasses) {
-                                            classRoom.classroomTeacher = null
+                                            classRoom.classroomTeacher =
+                                                null
                                         }
                                         TeacherClass.deleteWhere {
                                             TeacherClass.teacher eq teacher.id
@@ -229,7 +247,7 @@ fun load(database: Database) {
             }
             if (!found) {
                 // TODO: create teacher
-                teacher
+                // teacher
             }
         }
     }

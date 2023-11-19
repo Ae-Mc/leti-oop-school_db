@@ -38,6 +38,8 @@ kotlin {
                 implementation("io.github.pdvrieze.xmlutil:serialization:0.86.2")
                 implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.+")
                 implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.16.+")
+                implementation("com.itextpdf:itext7-core:8.0.2")
+                implementation("com.darkrockstudios:mpfilepicker:2.1.0")
             }
         }
         val jvmTest by getting

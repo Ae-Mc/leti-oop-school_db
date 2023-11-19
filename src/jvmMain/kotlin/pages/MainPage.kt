@@ -21,6 +21,7 @@ fun MainPage(database: Database) {
     var isStudentsPage by remember { mutableStateOf(false) }
     var isOpen by remember { mutableStateOf(true) }
     var isAskingToClose by remember { mutableStateOf(false) }
+    var showGenerateReportPage by remember { mutableStateOf(false) }
 
     // New Window creation
     if (isOpen) {
@@ -40,34 +41,42 @@ fun MainPage(database: Database) {
                     cancelCallback = { isAskingToClose = false },
                 )
             }
-            if (isTeachersPage) {
-                TeachersPage(database = database, callback = {
-                    isTeachersPage = false
-                })
-            } else if (isStudentsPage) {
-                StudentsPage(database = database, callback = {
-                    isStudentsPage = false
-                })
-            } else {
-                // Column with buttons
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceEvenly.also {
-                        Arrangement.spacedBy(10.dp)
-                    }) {
-                    Button(onClick = {
-                        isTeachersPage = true
-                    }) {
-                        Text("Список учителей")
-                    }
-                    Button(onClick = {
-                        isStudentsPage = true
-                    }) {
-                        Text("Список учеников")
+            if (showGenerateReportPage) {
+                GenerateReportPage(database) { showGenerateReportPage = false }
+            } else
+                if (isTeachersPage) {
+                    TeachersPage(database = database, callback = {
+                        isTeachersPage = false
+                    })
+                } else if (isStudentsPage) {
+                    StudentsPage(database = database, callback = {
+                        isStudentsPage = false
+                    })
+                } else {
+                    // Column with buttons
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceEvenly.also {
+                            Arrangement.spacedBy(10.dp)
+                        }) {
+                        Button(onClick = {
+                            isTeachersPage = true
+                        }) {
+                            Text("Список учителей")
+                        }
+                        Button(onClick = {
+                            isStudentsPage = true
+                        }) {
+                            Text("Список учеников")
+                        }
+                        Button(onClick = {
+                            showGenerateReportPage = true
+                        }) {
+                            Text("Отчёт")
+                        }
                     }
                 }
-            }
         }
     }
 }

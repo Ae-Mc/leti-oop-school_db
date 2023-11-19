@@ -18,13 +18,14 @@ class Student(id: EntityID<UUID>) : UUIDEntity(id) {
         fun validateNew(fullName: String, studentClass: Class): Student {
             return Student.new {
                 this.fullName = fullNameValidator(fullName)
-                this.studentClass = studentClass.id
+                this.studentClassId = studentClass.id
             }
         }
     }
 
     var fullName by Students.fullName
-    var studentClass by Students.studentClass
+    var studentClassId by Students.studentClass
+    var studentClass by Class referencedOn Students.studentClass
     val marks by Mark referrersOn Marks.student
 
     fun addMark(teacher: Teacher, subject: Subject, mark: Int, date: LocalDate?): Mark {
