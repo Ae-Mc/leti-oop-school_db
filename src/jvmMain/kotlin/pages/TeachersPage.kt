@@ -22,6 +22,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import entities.Teacher
 import entities.TeacherClass
 import entities.TeacherSubjects
+import io.github.aakira.napier.Napier
 import org.jetbrains.exposed.dao.with
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -36,184 +37,166 @@ import javax.xml.stream.XMLOutputFactory
 @Composable
 @Preview
 fun TeachersPage(database: Database, callback: () -> Unit) {
-    // Used to close window
-    var isOpen by remember { mutableStateOf(true) }
-
-    var teachers by remember { mutableStateOf(emptyList<Teacher>()) }
+    var teachers by remember { mutableStateOf(refreshTeachers(database)) }
     val weights = floatArrayOf(0.2f, 1.3f, 1f, 0.2f, 1f, 0.4f, 0.4f)
     val columnState = LazyListState()
     var showAddTeacherPage by remember { mutableStateOf(false) }
     var editingTeacher by remember { mutableStateOf<Teacher?>(null) }
-    val teacher: Teacher? = editingTeacher
 
-    fun reloadTeachers() {
-        teachers = transaction(database) {
-            Teacher.all().with(Teacher::subjects, Teacher::classroomClasses)
-                .toList()
-        }
-    }
-
-    reloadTeachers()
-
-    if (isOpen) {
-        if (showAddTeacherPage) {
-            // Shows add teacher page
-            AddTeacherPage(
-                database,
-                callback = {
-                    showAddTeacherPage = false
-                    reloadTeachers()
-                },
+    Napier.d("Teacher page opened")
+    if (showAddTeacherPage) {
+        // Shows add teacher page
+        AddTeacherPage(
+            database,
+            callback = {
+                showAddTeacherPage = false
+                teachers = refreshTeachers(database)
+            },
+        )
+    } else if (editingTeacher is Teacher) {
+        // Shows edit teacher page
+        EditTeacherPage(
+            database = database,
+            teacher = editingTeacher!!,
+            callback = {
+                editingTeacher = null
+                teachers = refreshTeachers(database)
+            })
+    } else {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(
+                8.dp,
+                Alignment.Top
             )
-        } else if (teacher is Teacher) {
-            // Shows edit teacher page
-            EditTeacherPage(
-                database = database,
-                teacher = teacher,
-                callback = {
-                    editingTeacher = null
-                    reloadTeachers()
-                })
-        } else {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(
-                    8.dp,
-                    Alignment.Top
-                )
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Button(onClick = {
-                        isOpen = false
-                        callback()
-                    }) {
-                        Text("Назад")
-                    }
-                    Spacer(Modifier.weight(1f))
-                    Button(onClick = {
-                        dump(database)
-                    }) {
-                        Text("Дамп")
-                    }
-                    Button(onClick = {
-                        load(database)
-                        reloadTeachers()
-                    }) {
-                        Text("Загрузка")
+                Button(onClick = callback) {
+                    Text("Назад")
+                }
+                Spacer(Modifier.weight(1f))
+                Button(onClick = {
+                    dump(database)
+                }) {
+                    Text("Дамп")
+                }
+                Button(onClick = {
+                    load(database)
+                    teachers = refreshTeachers(database)
+                }) {
+                    Text("Загрузка")
+                }
+            }
+            // Table
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                state = columnState,
+                userScrollEnabled = true,
+            ) {
+                // Here is the header
+                item {
+                    Row(Modifier.background(Color(0xff9efd38))) {
+                        TableCell(
+                            text = "№",
+                            weight = weights[0],
+                        )
+                        TableCell(text = "id", weight = weights[1])
+                        TableCell(text = "ФИО", weight = weights[2])
+                        TableCell(
+                            text = "Зарплата",
+                            weight = weights[3]
+                        )
+                        TableCell(
+                            text = "Предметы",
+                            weight = weights[4]
+                        )
+                        TableCell(
+                            text = "Классрук",
+                            weight = weights[5]
+                        )
+                        TableCell(text = "", weight = weights[6])
                     }
                 }
-                // Table
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                    state = columnState,
-                    userScrollEnabled = true,
-                ) {
-                    // Here is the header
-                    item {
-                        Row(Modifier.background(Color(0xff9efd38))) {
-                            TableCell(
-                                text = "№",
-                                weight = weights[0],
-                            )
-                            TableCell(text = "id", weight = weights[1])
-                            TableCell(text = "ФИО", weight = weights[2])
-                            TableCell(
-                                text = "Зарплата",
-                                weight = weights[3]
-                            )
-                            TableCell(
-                                text = "Предметы",
-                                weight = weights[4]
-                            )
-                            TableCell(
-                                text = "Классрук",
-                                weight = weights[5]
-                            )
-                            TableCell(text = "", weight = weights[6])
-                        }
-                    }
-                    // Here are all the lines of your table.
-                    this.itemsIndexed(
-                        items = teachers,
-                        contentType = { _, _ -> },
-                        key = { _, teacher -> teacher.id },
-                    ) { index, teacher ->
-                        Row(
-                            modifier = Modifier.onClick {
-                                editingTeacher = teacher
-                            },
-                        ) {
-                            TableCell(
-                                text = index.toString(),
-                                weight = weights[0]
-                            )
-                            TableCell(
-                                text = teacher.id.toString(),
-                                weight = weights[1],
-                                textStyle = TextStyle(textDecoration = TextDecoration.Underline)
-                            )
-                            TableCell(
-                                text = teacher.fullName,
-                                weight = weights[2]
-                            )
-                            TableCell(
-                                text = teacher.salary.toString(),
-                                weight = weights[3]
-                            )
-                            TableCell(
-                                text = teacher.subjects.joinToString(", ") { subject -> subject.name },
-                                weight = weights[4]
-                            )
-                            TableCell(
-                                text = teacher.classroomClasses.joinToString(
-                                    ", "
-                                ),
-                                weight = weights[5]
-                            )
-                            TableCell(
-                                text = "Удалить",
-                                weight = weights[6],
-                                onClick = {
-                                    transaction(database) {
-                                        for (classRoom in teacher.classroomClasses) {
-                                            classRoom.classroomTeacher =
-                                                null
-                                        }
-                                        TeacherClass.deleteWhere {
-                                            TeacherClass.teacher eq teacher.id
-                                        }
-                                        TeacherSubjects.deleteWhere {
-                                            TeacherSubjects.teacher eq teacher.id
-                                        }
-                                        teacher.delete()
-                                    }
-                                    reloadTeachers()
-                                },
-                            )
-                        }
-
-                    }
-                }
-                Box(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                ) {
-                    Button(
-                        onClick = {
-                            showAddTeacherPage = true
+                // Here are all the lines of your table.
+                this.itemsIndexed(
+                    items = teachers,
+                    contentType = { _, _ -> },
+                    key = { _, teacher -> teacher.id },
+                ) { index, teacher ->
+                    Row(
+                        modifier = Modifier.onClick {
+                            editingTeacher = teacher
                         },
                     ) {
-                        Text(
-                            "Добавить учителя",
+                        TableCell(
+                            text = index.toString(),
+                            weight = weights[0]
+                        )
+                        TableCell(
+                            text = teacher.id.toString(),
+                            weight = weights[1],
+                            textStyle = TextStyle(textDecoration = TextDecoration.Underline)
+                        )
+                        TableCell(
+                            text = teacher.fullName,
+                            weight = weights[2]
+                        )
+                        TableCell(
+                            text = teacher.salary.toString(),
+                            weight = weights[3]
+                        )
+                        TableCell(
+                            text = teacher.subjects.joinToString(", ") { subject -> subject.name },
+                            weight = weights[4]
+                        )
+                        TableCell(
+                            text = teacher.classroomClasses.joinToString(
+                                ", "
+                            ),
+                            weight = weights[5]
+                        )
+                        TableCell(
+                            text = "Удалить",
+                            weight = weights[6],
+                            onClick = {
+                                transaction(database) {
+                                    for (classRoom in teacher.classroomClasses) {
+                                        classRoom.classroomTeacher =
+                                            null
+                                    }
+                                    TeacherClass.deleteWhere {
+                                        TeacherClass.teacher eq teacher.id
+                                    }
+                                    TeacherSubjects.deleteWhere {
+                                        TeacherSubjects.teacher eq teacher.id
+                                    }
+                                    teacher.delete()
+                                }
+                                teachers = refreshTeachers(database)
+                            },
                         )
                     }
+
+                }
+            }
+            Box(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            ) {
+                Button(
+                    onClick = {
+                        showAddTeacherPage = true
+                    },
+                ) {
+                    Text(
+                        "Добавить учителя",
+                    )
                 }
             }
         }
     }
-
 }
 
 fun dump(database: Database) {
@@ -233,7 +216,7 @@ fun dump(database: Database) {
 fun load(database: Database) {
     val mapper = XmlMapper.builder().defaultUseWrapper(false).build()
     val inputFile = File("teachers.xml")
-    var teachers: List<Teacher> =
+    val teachers: List<Teacher> =
         mapper.readValue<List<Teacher>>(inputFile)
     transaction(database) {
         val dbTeachers = Teacher.all()
@@ -252,3 +235,11 @@ fun load(database: Database) {
         }
     }
 }
+
+fun refreshTeachers(database: Database): List<Teacher> {
+    return transaction(database) {
+        Teacher.all().with(Teacher::subjects, Teacher::classroomClasses)
+            .toList()
+    }
+}
+

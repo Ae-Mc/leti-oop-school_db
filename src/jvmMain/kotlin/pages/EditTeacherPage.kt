@@ -10,89 +10,111 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.WindowState
+import entities.Subject
 import entities.Teacher
+import exceptions.ValidationException
+import io.github.aakira.napier.Napier
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.transactions.transaction
+import positiveIntValidator
+import util.validators.fullNameValidator
+import widgets.CheckboxesList
 import widgets.InputRow
 
 @Composable
 fun EditTeacherPage(
     database: Database,
     teacher: Teacher,
-    callback: () -> Unit = {}
+    callback: () -> Unit = {},
 ) {
     var isOpen by remember { mutableStateOf(true) }
 
     var teacherFIO by remember { mutableStateOf(teacher.fullName) }
-    var teacherSalary by remember { mutableStateOf(teacher.salary) }
-    var isFioError by remember { mutableStateOf(true) }
-    var isSalaryError by remember { mutableStateOf(true) }
+    var teacherSalary by remember { mutableStateOf(teacher.salary.toString()) }
+    var errorText by remember { mutableStateOf<String?>(null) }
+    val subjects = transaction(database) { Subject.all().toList() }
+    val selectedSubjects = remember {
+        mutableStateListOf(*teacher.subjects.map { it.id.value }
+            .toTypedArray())
+    }
 
     if (isOpen) {
-        Window(
-            onCloseRequest = { isOpen = false },
-            state = WindowState(
-                width = 1200.dp,
-                height = 720.dp,
-                position = WindowPosition(Alignment.Center),
-            ),
+        Napier.d("Edit teacher page opened")
+        Column(
+            modifier = Modifier.padding(all = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(all = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+            Button(
+                content = { Text("Назад") },
+                onClick = {
+                    isOpen = false
+                    callback()
+                }
+            )
+            Text(
+                "Редактирование учителя",
+                style = MaterialTheme.typography.h4,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            InputRow(
+                "ФИО", teacherFIO
             ) {
+                teacherFIO = it
+            }
+            InputRow(
+                "Заработная плата",
+                teacherSalary
+            ) {
+                teacherSalary = it
+            }
+            if (errorText != null) {
                 Text(
-                    "Добавление учителя",
-                    style = MaterialTheme.typography.h4,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    "Ошибка: $errorText",
+                    style = MaterialTheme.typography.subtitle2.copy(color = MaterialTheme.colors.error)
                 )
-                InputRow(
-                    "ФИО", teacherFIO, isError = isFioError,
-                ) {
-                    if (it.isBlank()) {
-                        isFioError = true
+            }
+            Text(
+                "Предметы, которые преподаватель может преподавать",
+                style = MaterialTheme.typography.h6
+            )
+            CheckboxesList(
+                subjects,
+                toString = { subject -> subject.name },
+                selectedItems = subjects.filter { it.id.value in selectedSubjects },
+                onSelect = {
+                    if (selectedSubjects.contains(it.id.value)) {
+                        selectedSubjects -= it.id.value
                     } else {
-                        teacherFIO = it
-                        isFioError = false
+                        selectedSubjects += it.id.value
                     }
-                }
-                InputRow(
-                    "Заработная плата",
-                    teacherSalary.toString(),
-                    isError = isSalaryError,
-                ) {
-                    if (it.isBlank()) {
-                        isSalaryError = true
-                        teacherSalary = 0
-                    } else if (it.toIntOrNull() == null) {
-                        isSalaryError = true
-                    } else {
-                        teacherSalary = it.toInt()
-                        isSalaryError = false
-                    }
-                }
-                Button(
-                    enabled = !(isSalaryError && isFioError),
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    onClick = {
+                },
+            )
+            Button(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                onClick = {
+                    try {
                         transaction(database) {
-                            Teacher.new {
-                                fullName = teacherFIO
-                                salary = teacherSalary
-                            }
-                            isOpen = false
+                            val fullName = fullNameValidator(teacherFIO)
+                            val salary =
+                                positiveIntValidator(teacherSalary.toIntOrNull())
+                            teacher.fullName = fullName
+                            teacher.salary = salary
+                            teacher.subjects =
+                                SizedCollection(subjects.filter { it.id.value in selectedSubjects })
                         }
+                        isOpen = false
+                        callback()
+                    } catch (e: ValidationException) {
+                        errorText = "Не удалось создать преподавателя. " +
+                                "Возможно, введена отрицательная зарплата " +
+                                "или ФИО короче 3-х букв?"
                     }
-                )
-                {
-                    Text("Добавить")
                 }
+            )
+            {
+                Text("Применить")
             }
         }
-    } else {
-        callback()
     }
 }

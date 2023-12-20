@@ -8,7 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogWindow
+import io.github.aakira.napier.Napier
 
 @Composable
 fun CloseDialog(
@@ -17,7 +18,8 @@ fun CloseDialog(
     confirmCallback: () -> Unit = {},
     cancelCallback: () -> Unit = {}
 ) {
-    Dialog(title = title, onCloseRequest = { }) {
+    Napier.d("Close dialog opened")
+    DialogWindow(title = title, onCloseRequest = cancelCallback) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.SpaceEvenly,

@@ -18,10 +18,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import entities.Student
+import io.github.aakira.napier.Napier
 import org.jetbrains.exposed.dao.with
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
 import widgets.TableCell
+
 
 // List of teachers
 @OptIn(ExperimentalFoundationApi::class)
@@ -32,18 +34,32 @@ fun StudentsPage(database: Database, callback: () -> Unit) {
     var isOpen by remember { mutableStateOf(true) }
 
     var students by remember { mutableStateOf(emptyList<Student>()) }
-    val weights = floatArrayOf(0.2f, 1.3f, 1f, 0.2f, 1f)
+    val weights = floatArrayOf(0.2f, 1.3f, 1f, 0.2f, 1f, 0.3f)
     val columnState = LazyListState()
     var showAddStudentPage by remember { mutableStateOf(false) }
     var editingStudent by remember { mutableStateOf<Student?>(null) }
-    val student: Student? = editingStudent
 
-    students = transaction(database) {
-        Student.all().with(Student::studentClass, Student::marks)
-            .toList()
-    }
+    students = refreshStudents(database)
 
-    if (isOpen) {
+    Napier.d("Students page opened")
+    if (showAddStudentPage) {
+        AddStudentPage(
+            database,
+            callback = {
+                showAddStudentPage = false
+                students = refreshStudents(database)
+            },
+        )
+    } else if (editingStudent is Student) {
+        // Shows edit teacher page
+        EditStudentPage(
+            database = database,
+            student = editingStudent!!,
+            callback = {
+                editingStudent = null
+                students = refreshStudents(database)
+            })
+    } else {
         Column(
             modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top)
@@ -71,6 +87,7 @@ fun StudentsPage(database: Database, callback: () -> Unit) {
                         TableCell(text = "ФИО", weight = weights[2])
                         TableCell(text = "Класс", weight = weights[3])
                         TableCell(text = "Оценки", weight = weights[4])
+                        TableCell(text = "", weight = weights[5])
                     }
                 }
                 // Here are all the lines of your table.
@@ -105,6 +122,16 @@ fun StudentsPage(database: Database, callback: () -> Unit) {
                             text = student.marks.joinToString(", ") { mark -> mark.mark.toString() },
                             weight = weights[4]
                         )
+                        TableCell(
+                            text = "Удалить",
+                            weight = weights[5],
+                            onClick = {
+                                transaction(database) {
+                                    student.delete()
+                                }
+                                students = refreshStudents(database)
+                            },
+                        )
                     }
 
                 }
@@ -124,28 +151,12 @@ fun StudentsPage(database: Database, callback: () -> Unit) {
             }
         }
     }
+}
 
-    // if (showAddStudentPage) {
-    //     // Shows add teacher page
-    //     AddTeacherPage(
-    //         database,
-    //         callback = {
-    //             showAddStudentPage = false
-    //             students = transaction(database) {
-    //                 Teacher.all()
-    //                     .with(Teacher::subjects, Teacher::classroomClasses)
-    //                     .toList()
-    //             }
-    //         },
-    //     )
-    // } else if (student is Teacher) {
-    //     // Shows edit teacher page
-    //     EditTeacherPage(database = database, teacher = student, callback = {
-    //         editingStudent = null
-    //         students = transaction(database) {
-    //             Teacher.all().with(Teacher::subjects, Teacher::classroomClasses)
-    //                 .toList()
-    //         }
-    //     })
-    // }
+fun refreshStudents(database: Database): List<Student> {
+    return transaction(database) {
+        Student.all()
+            .with(Student::studentClass, Student::marks)
+            .toList()
+    }
 }

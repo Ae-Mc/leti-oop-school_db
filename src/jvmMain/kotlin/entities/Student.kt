@@ -4,21 +4,24 @@ import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.UUIDTable
+import org.jetbrains.exposed.sql.ReferenceOption
 import util.validators.fullNameValidator
+import util.validators.notNullValidator
 import java.time.LocalDate
 import java.util.*
 
 object Students : UUIDTable() {
     var fullName = text("full_name").index()
-    var studentClass = reference("student_class", Classes)
+    var studentClass =
+        reference("student_class", Classes, onDelete = ReferenceOption.CASCADE)
 }
 
 class Student(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object : UUIDEntityClass<Student>(Students) {
-        fun validateNew(fullName: String, studentClass: Class): Student {
+        fun validateNew(fullName: String, studentClass: Class?): Student {
             return Student.new {
                 this.fullName = fullNameValidator(fullName)
-                this.studentClassId = studentClass.id
+                this.studentClassId = notNullValidator(studentClass).id
             }
         }
     }
@@ -28,7 +31,12 @@ class Student(id: EntityID<UUID>) : UUIDEntity(id) {
     var studentClass by Class referencedOn Students.studentClass
     val marks by Mark referrersOn Marks.student
 
-    fun addMark(teacher: Teacher, subject: Subject, mark: Int, date: LocalDate?): Mark {
+    fun addMark(
+        teacher: Teacher,
+        subject: Subject,
+        mark: Int,
+        date: LocalDate?,
+    ): Mark {
         val student = this
         return Mark.new {
             this.subject = subject

@@ -4,14 +4,18 @@ import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.UUIDTable
+import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.javatime.date
 import java.util.*
 
 object Marks : UUIDTable() {
     var mark = integer("mark")
-    var student = reference("student", Students)
-    var teacher = reference("teacher", Teachers)
-    var subject = reference("subject", Subjects)
+    var student =
+        reference("student", Students, onDelete = ReferenceOption.CASCADE)
+    var teacher =
+        reference("teacher", Teachers, onDelete = ReferenceOption.CASCADE)
+    var subject =
+        reference("subject", Subjects, onDelete = ReferenceOption.CASCADE)
     var date = date("date")
 }
 
